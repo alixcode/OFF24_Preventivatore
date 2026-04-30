@@ -1,0 +1,405 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// MULTI-TENANT ROOT
+// ─────────────────────────────────────────
+
+model Company {
+  id              String   @id @default(cuid())
+  name            String
+  vatNumber       String?  @unique
+  email           String?
+  phone           String?
+  address         String?
+  overheadRate    Float    @default(0.18)  // coefficiente overhead aziendale
+  marginMinimum   Float    @default(0.20)
+  marginTarget    Float    @default(0.30)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users           User[]
+  clients         Client[]
+  quotes          Quote[]
+  materials       Material[]
+  suppliers       Supplier[]
+  operations      Operation[]
+  costRates       CostRate[]
+  jobs            Job[]
+  attachments     Attachment[]
+}
+
+// ─────────────────────────────────────────
+// UTENTI
+// ─────────────────────────────────────────
+
+model User {
+  id           String    @id @default(cuid())
+  companyId    String
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         UserRole  @default(operativo)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company      Company   @relation(fields: [companyId], references: [id])
+  quotes       Quote[]
+  approvals    Approval[]
+}
+
+enum UserRole {
+  admin
+  commerciale
+  operativo
+}
+
+// ─────────────────────────────────────────
+// CLIENTI
+// ─────────────────────────────────────────
+
+model Client {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  vatNumber   String?
+  email       String?
+  phone       String?
+  address     String?
+  notes       String?
+  isNew       Boolean  @default(true)  // usato dal motore rischio
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  quotes      Quote[]
+}
+
+// ─────────────────────────────────────────
+// PREVENTIVI
+// ─────────────────────────────────────────
+
+model Quote {
+  id                 String      @id @default(cuid())
+  companyId          String
+  clientId           String
+  createdById        String
+  number             String      // es. PV-2026-041
+  status             QuoteStatus @default(bozza)
+
+  // Qualificazione
+  workCategory       String      // scale | cancelli | strutture | ...
+  detailLevel        String      // verbale | foto_schizzo | disegno_tecnico
+  urgency            String      // normale | urgente | urgentissimo
+  initialNotes       String?
+
+  // Configuratore
+  material           String?     // ferro_s235 | inox_304 | alluminio
+  complexity         String?     // bassa | media | alta
+  widthMm            Int?
+  heightMm           Int?
+  depthMm            Int?
+  weightKg           Float?
+  finishColor        String?
+  finishType         String?
+
+  // Costi calcolati (snapshot dell'ultima versione)
+  costTotal          Float       @default(0)
+  appliedPrice       Float       @default(0)
+  appliedMargin      Float       @default(0)
+  riskCoefficient    Float       @default(0)
+  reliabilityIndex   Int         @default(100)
+
+  // Output
+  validityDays       Int         @default(30)
+  paymentTerms       String?
+  clientDescription  String?
+  exclusions         String[]    @default([])
+
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  company            Company     @relation(fields: [companyId], references: [id])
+  client             Client      @relation(fields: [clientId], references: [id])
+  createdBy          User        @relation(fields: [createdById], references: [id])
+  versions           QuoteVersion[]
+  approvals          Approval[]
+  job                Job?
+  attachments        Attachment[]
+  operations         QuoteOperation[]
+}
+
+enum QuoteStatus {
+  bozza
+  inviato
+  approvato
+  perso
+  scaduto
+}
+
+// ─────────────────────────────────────────
+// VERSIONI PREVENTIVO
+// ─────────────────────────────────────────
+
+model QuoteVersion {
+  id              String   @id @default(cuid())
+  quoteId         String
+  version         Int      // 1, 2, 3...
+  costTotal       Float
+  appliedPrice    Float
+  appliedMargin   Float
+  riskCoefficient Float
+  changeNotes     String?  // cosa è cambiato rispetto alla versione precedente
+  snapshot        Json     // snapshot completo dei dati al momento della versione
+  createdAt       DateTime @default(now())
+
+  quote           Quote    @relation(fields: [quoteId], references: [id])
+  items           QuoteItem[]
+
+  @@unique([quoteId, version])
+}
+
+// ─────────────────────────────────────────
+// RIGHE PREVENTIVO (per versione)
+// ─────────────────────────────────────────
+
+model QuoteItem {
+  id            String   @id @default(cuid())
+  quoteVersionId String
+  type          ItemType // materiale | lavorazione | costo_esterno
+  description   String
+  unit          String?
+  quantity      Float    @default(1)
+  unitPrice     Float
+  total         Float
+  sortOrder     Int      @default(0)
+  materialId    String?  // se type = materiale
+  operationId   String?  // se type = lavorazione
+
+  quoteVersion  QuoteVersion @relation(fields: [quoteVersionId], references: [id])
+}
+
+enum ItemType {
+  materiale
+  lavorazione
+  costo_esterno
+  consumabile
+  overhead
+}
+
+// ─────────────────────────────────────────
+// LAVORAZIONI SU PREVENTIVO
+// ─────────────────────────────────────────
+
+model QuoteOperation {
+  id          String  @id @default(cuid())
+  quoteId     String
+  operationId String
+  isIncluded  Boolean @default(true)
+
+  quote       Quote     @relation(fields: [quoteId], references: [id])
+  operation   Operation @relation(fields: [operationId], references: [id])
+
+  @@unique([quoteId, operationId])
+}
+
+// ─────────────────────────────────────────
+// MATERIALI E PREZZI
+// ─────────────────────────────────────────
+
+model Material {
+  id          String          @id @default(cuid())
+  companyId   String
+  code        String          // MAT-001
+  name        String
+  category    String          // ferro | inox | alluminio | ferramenta
+  unit        String          // kg | ml | pz | mq
+  currentPrice Float
+  priceUpdatedAt DateTime    @default(now())
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  company     Company         @relation(fields: [companyId], references: [id])
+  priceHistory MaterialPrice[]
+  supplierQuotes SupplierQuote[]
+
+  @@unique([companyId, code])
+}
+
+model MaterialPrice {
+  id          String   @id @default(cuid())
+  materialId  String
+  price       Float
+  supplierId  String?
+  validFrom   DateTime @default(now())
+  validUntil  DateTime?
+  notes       String?
+
+  material    Material  @relation(fields: [materialId], references: [id])
+}
+
+// ─────────────────────────────────────────
+// FORNITORI
+// ─────────────────────────────────────────
+
+model Supplier {
+  id          String   @id @default(cuid())
+  companyId   String
+  name        String
+  email       String?
+  phone       String?
+  notes       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  quotes      SupplierQuote[]
+}
+
+model SupplierQuote {
+  id          String              @id @default(cuid())
+  supplierId  String
+  materialId  String
+  status      SupplierQuoteStatus @default(richiesta_inviata)
+  requestedAt DateTime            @default(now())
+  receivedAt  DateTime?
+  price       Float?
+  validUntil  DateTime?
+  notes       String?
+
+  supplier    Supplier  @relation(fields: [supplierId], references: [id])
+  material    Material  @relation(fields: [materialId], references: [id])
+}
+
+enum SupplierQuoteStatus {
+  richiesta_inviata
+  prezzo_ricevuto
+  accettato
+  rifiutato
+  scaduto
+}
+
+// ─────────────────────────────────────────
+// OPERAZIONI / LAVORAZIONI
+// ─────────────────────────────────────────
+
+model Operation {
+  id          String   @id @default(cuid())
+  companyId   String
+  code        String   // es. OP-SALD-MIG
+  name        String   // es. Saldatura MIG
+  defaultHourlyRate Float
+  isActive    Boolean  @default(true)
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  costRates   CostRate[]
+  quoteOps    QuoteOperation[]
+}
+
+model CostRate {
+  id          String   @id @default(cuid())
+  companyId   String
+  operationId String?  // null = tariffa generale
+  name        String
+  hourlyRate  Float
+  validFrom   DateTime @default(now())
+  validUntil  DateTime?
+
+  company     Company    @relation(fields: [companyId], references: [id])
+  operation   Operation? @relation(fields: [operationId], references: [id])
+}
+
+// ─────────────────────────────────────────
+// APPROVAZIONI
+// ─────────────────────────────────────────
+
+model Approval {
+  id          String         @id @default(cuid())
+  quoteId     String
+  userId      String
+  status      ApprovalStatus
+  reason      String?
+  createdAt   DateTime       @default(now())
+
+  quote       Quote   @relation(fields: [quoteId], references: [id])
+  user        User    @relation(fields: [userId], references: [id])
+}
+
+enum ApprovalStatus {
+  approvato
+  rifiutato
+  richiesta_revisione
+}
+
+// ─────────────────────────────────────────
+// COMMESSE
+// ─────────────────────────────────────────
+
+model Job {
+  id              String    @id @default(cuid())
+  companyId       String
+  quoteId         String    @unique
+  number          String    // es. COM-2026-015
+  status          JobStatus @default(aperta)
+  startDate       DateTime?
+  endDate         DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  company         Company     @relation(fields: [companyId], references: [id])
+  quote           Quote       @relation(fields: [quoteId], references: [id])
+  actuals         JobActual[]
+  attachments     Attachment[]
+}
+
+enum JobStatus {
+  aperta
+  in_lavorazione
+  completata
+  fatturata
+}
+
+// Consuntivo reale
+model JobActual {
+  id              String   @id @default(cuid())
+  jobId           String
+  type            String   // manodopera | materiale | costo_esterno
+  description     String
+  quantity        Float
+  unitCost        Float
+  total           Float
+  notes           String?
+  recordedAt      DateTime @default(now())
+
+  job             Job @relation(fields: [jobId], references: [id])
+}
+
+// ─────────────────────────────────────────
+// ALLEGATI
+// ─────────────────────────────────────────
+
+model Attachment {
+  id          String   @id @default(cuid())
+  companyId   String
+  quoteId     String?
+  jobId       String?
+  filename    String
+  mimeType    String
+  sizeBytes   Int
+  storagePath String
+  uploadedAt  DateTime @default(now())
+
+  company     Company  @relation(fields: [companyId], references: [id])
+  quote       Quote?   @relation(fields: [quoteId], references: [id])
+  job         Job?     @relation(fields: [jobId], references: [id])
+}

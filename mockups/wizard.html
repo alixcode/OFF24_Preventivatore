@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFF24 — Wizard Preventivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d141a; --bg2: #1d1e20; --bg3: #211e1b;
+    --accent: #cc6333; --accent-h: #b5522a; --accent-light: #ffeacc;
+    --text: #ffffff; --text2: #56585e; --text3: #8a8c92;
+    --border: rgba(255,255,255,0.08); --border-focus: var(--accent);
+    --green: #4caf7d; --red: #e05c5c; --yellow: #d4a843;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 20;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 20px; }
+  .logo-name { font-family: 'Playfair Display', serif; font-size: 18px; }
+  .back-link { font-size: 12px; color: var(--text2); text-decoration: none; }
+  .back-link:hover { color: var(--accent); }
+
+  /* PROGRESS BAR */
+  .progress-area {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+  }
+  .steps-row { display: flex; align-items: stretch; }
+  .step-item {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    padding: 16px 0; border-bottom: 3px solid transparent;
+    cursor: pointer; transition: border-color 0.2s;
+    position: relative;
+  }
+  .step-item + .step-item::before {
+    content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+    height: 1px; width: 1px; background: var(--border);
+  }
+  .step-item.done { border-bottom-color: var(--green); }
+  .step-item.active { border-bottom-color: var(--accent); }
+  .step-item.inactive { opacity: 0.4; }
+  .step-num {
+    width: 26px; height: 26px; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+  .step-item.done .step-num { background: var(--green); border-color: var(--green); color: #fff; }
+  .step-item.active .step-num { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .step-label { font-size: 12.5px; font-weight: 500; }
+  .step-sub { font-size: 11px; color: var(--text2); margin-top: 1px; }
+
+  /* LAYOUT */
+  .layout { display: flex; min-height: calc(100vh - 120px); }
+  .form-area { flex: 1; padding: 32px; max-width: 740px; }
+  .summary-sidebar { width: 320px; background: var(--bg2); border-left: 1px solid var(--border); padding: 24px; position: sticky; top: 120px; height: fit-content; }
+
+  /* STEP PANELS */
+  .step-panel { display: none; }
+  .step-panel.visible { display: block; }
+
+  .step-title { font-family: 'Playfair Display', serif; font-size: 26px; margin-bottom: 6px; }
+  .step-desc { color: var(--text2); font-size: 13.5px; margin-bottom: 28px; line-height: 1.5; }
+
+  /* FORM ELEMENTS */
+  .field { margin-bottom: 20px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+  .field input, .field select, .field textarea {
+    width: 100%; background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px;
+    padding: 10px 14px; outline: none; transition: border-color 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field input::placeholder, .field textarea::placeholder { color: var(--text2); }
+  .field select option { background: var(--bg2); }
+
+  /* RADIO CARDS */
+  .radio-grid { display: grid; gap: 10px; }
+  .radio-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .radio-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .radio-card {
+    border: 1px solid var(--border); padding: 14px 16px; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; user-select: none;
+  }
+  .radio-card:hover { border-color: rgba(204,99,51,0.4); background: rgba(204,99,51,0.04); }
+  .radio-card.selected { border-color: var(--accent); background: rgba(204,99,51,0.1); }
+  .radio-card .rc-icon { font-size: 20px; margin-bottom: 8px; color: var(--accent); }
+  .radio-card .rc-label { font-size: 13px; font-weight: 600; }
+  .radio-card .rc-sub { font-size: 11.5px; color: var(--text2); margin-top: 3px; }
+
+  /* INLINE ROW */
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+  /* STATUS BOX */
+  .status-box {
+    border: 1px solid var(--border); padding: 18px 20px; margin-bottom: 24px;
+    display: flex; align-items: flex-start; gap: 16px;
+  }
+  .status-box.ok { border-color: rgba(76,175,125,0.4); background: rgba(76,175,125,0.05); }
+  .status-box.warn { border-color: rgba(212,168,67,0.4); background: rgba(212,168,67,0.05); }
+  .status-box.danger { border-color: rgba(224,92,92,0.4); background: rgba(224,92,92,0.05); }
+  .status-icon { font-size: 22px; margin-top: 1px; }
+  .status-title { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .status-body { font-size: 12.5px; color: var(--text2); line-height: 1.5; }
+
+  /* AFFIDABILITA METER */
+  .affid-wrap { margin: 24px 0; }
+  .affid-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .affid-bar-bg { height: 8px; background: var(--border); position: relative; }
+  .affid-bar-fill { height: 100%; background: linear-gradient(90deg, #e05c5c, var(--accent), #4caf7d); width: 65%; position: relative; }
+  .affid-val { font-family: 'Playfair Display', serif; font-size: 28px; margin-top: 10px; }
+  .affid-tag { font-size: 12px; color: var(--accent); margin-top: 4px; }
+
+  /* LAVORAZIONI CHECKBOXES */
+  .check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .check-item {
+    border: 1px solid var(--border); padding: 10px 12px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px; transition: border-color 0.15s;
+    user-select: none;
+  }
+  .check-item:hover { border-color: rgba(204,99,51,0.4); }
+  .check-item.checked { border-color: var(--accent); background: rgba(204,99,51,0.08); }
+  .check-item .cb { width: 14px; height: 14px; border: 1px solid var(--border); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .check-item.checked .cb { background: var(--accent); border-color: var(--accent); }
+  .check-item .cb-label { font-size: 12.5px; }
+
+  /* MATERIALS TABLE */
+  .mat-table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  .mat-table th { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+  .mat-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .mat-table tr:nth-child(even) td { background: var(--bg3); }
+  .mat-input { background: transparent; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px; width: 80px; text-align: right; outline: none; }
+  .mat-input:focus { border-bottom: 1px solid var(--accent); }
+  .alert-price { color: var(--yellow); font-size: 11px; }
+  .add-row-btn { font-size: 12.5px; color: var(--accent); cursor: pointer; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 6px 0; }
+
+  /* COST SUMMARY */
+  .cost-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-row.total { font-weight: 700; font-size: 15px; padding-top: 12px; }
+  .cost-row.section-head { color: var(--text2); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; padding-top: 16px; font-weight: 700; }
+
+  /* PRICE ENGINE */
+  .price-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .price-card { border: 1px solid var(--border); padding: 16px; }
+  .price-card.recommended { border-color: var(--accent); background: rgba(204,99,51,0.06); }
+  .price-card .pc-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .price-card .pc-value { font-family: 'Playfair Display', serif; font-size: 26px; }
+  .price-card .pc-margin { font-size: 12px; color: var(--green); margin-top: 4px; }
+  .price-card .pc-tag { font-size: 11px; color: var(--accent); margin-top: 4px; }
+
+  /* RISK GAUGE */
+  .risk-box { background: var(--bg3); border: 1px solid var(--border); padding: 16px 20px; margin-bottom: 20px; }
+  .risk-factors { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .risk-factor { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text2); }
+  .risk-factor .rf-val { font-weight: 600; }
+  .risk-factor .rf-val.active { color: var(--accent); }
+  .risk-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .risk-total .rt-label { font-size: 12px; color: var(--text2); }
+  .risk-total .rt-val { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--accent); }
+
+  /* MARGIN SLIDER */
+  .slider-wrap { margin: 20px 0; }
+  .slider-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 8px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 4px; }
+
+  /* BUTTONS */
+  .btn { padding: 10px 24px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+  .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+  .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+  .form-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+
+  /* SUMMARY SIDEBAR */
+  .summary-title { font-size: 12px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 16px; }
+  .sum-row { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .sum-row:last-child { border: none; }
+  .sum-label { color: var(--text2); }
+  .sum-value { font-weight: 500; }
+  .sum-section { margin-bottom: 20px; }
+  .sum-sep { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .sum-total { display: flex; justify-content: space-between; font-weight: 700; font-size: 15px; }
+  .reliability-badge {
+    margin-top: 16px; padding: 12px; border: 1px solid rgba(204,99,51,0.3);
+    background: rgba(204,99,51,0.08);
+  }
+  .rb-label { font-size: 10px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .rb-value { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--accent); }
+  .rb-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+  /* SECTION DIVIDER */
+  .sec-div { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .sec-label { font-size: 11px; color: var(--text2); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; }
+
+  /* OPERATIONS */
+  .op-row { display: grid; grid-template-columns: 1fr 80px 100px 80px auto; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .op-row.header { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.8px; padding: 6px 0 10px; }
+  .del-btn { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 16px; }
+  .del-btn:hover { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-name" style="font-family:'Playfair Display',serif;">OFF24</div>
+    <a href="dashboard.html" class="back-link">← Dashboard</a>
+  </div>
+  <div style="font-size:13px;color:var(--text2);">Nuovo preventivo — PV-2026-042</div>
+</div>
+
+<!-- STEP PROGRESS -->
+<div class="progress-area">
+  <div class="steps-row" id="stepsRow">
+    <div class="step-item done" onclick="goTo(1)">
+      <div class="step-num">✓</div>
+      <div><div class="step-label">Qualificazione</div><div class="step-sub">Tipo e urgenza</div></div>
+    </div>
+    <div class="step-item active" onclick="goTo(2)">
+      <div class="step-num" id="sn2">2</div>
+      <div><div class="step-label">Configuratore</div><div class="step-sub">Dimensioni e lavorazioni</div></div>
+    </div>
+    <div class="step-item inactive" onclick="goTo(3)" id="step3">
+      <div class="step-num" id="sn3">3</div>
+      <div><div class="step-label">Materiali</div><div class="step-sub">Listino e quantità</div></div>
+    </div>
+    <div class="step-item inactive" onclick="goTo(4)" id="step4">
+      <div class="step-num" id="sn4">4</div>
+      <div><div class="step-label">Prezzi e margini</div><div class="step-sub">Costi e prezzo finale</div></div>
+    </div>
+    <div class="step-item inactive" onclick="goTo(5)" id="step5">
+      <div class="step-num" id="sn5">5</div>
+      <div><div class="step-label">Revisione</div><div class="step-sub">Output e invio</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="layout">
+  <div class="form-area">
+
+    <!-- ========== STEP 1: QUALIFICAZIONE ========== -->
+    <div class="step-panel" id="panel1">
+      <div class="step-title">Qualificazione <span style="color:var(--accent)">richiesta</span></div>
+      <div class="step-desc">Inserisci le informazioni di base. Bastano pochi dati per avere una prima stima dell'affidabilità del preventivo.</div>
+
+      <div class="field">
+        <label>Cliente</label>
+        <select>
+          <option value="">— seleziona cliente —</option>
+          <option>Costruzioni Rossi</option>
+          <option>Logistica Verdi SpA</option>
+          <option>Studio Bianchi</option>
+          <option>+ Nuovo cliente...</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Tipo lavorazione</label>
+        <div class="radio-grid cols-3">
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-icon">⌇</div>
+            <div class="rc-label">Scale</div>
+            <div class="rc-sub">Elicoidali, lineari, retrattili</div>
+          </div>
+          <div class="radio-card selected" onclick="selectCard(this)">
+            <div class="rc-icon">▦</div>
+            <div class="rc-label">Cancelli</div>
+            <div class="rc-sub">Scorrevoli, battenti, automatici</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-icon">⊞</div>
+            <div class="rc-label">Strutture</div>
+            <div class="rc-sub">Portanti, capannoni, soppalchi</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-icon">⊓</div>
+            <div class="rc-label">Pensiline</div>
+            <div class="rc-sub">Acciaio zincato, policarbonato</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-icon">⊟</div>
+            <div class="rc-label">Ringhiere</div>
+            <div class="rc-sub">Parapetti, ringhiere, recinzioni</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-icon">◦</div>
+            <div class="rc-label">Altro</div>
+            <div class="rc-sub">Carpenteria su specifica</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Livello di dettaglio richiesta</label>
+        <div class="radio-grid cols-3">
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Verbale</div>
+            <div class="rc-sub">Solo descrizione a voce / testo</div>
+          </div>
+          <div class="radio-card selected" onclick="selectCard(this)">
+            <div class="rc-label">Foto / Schizzo</div>
+            <div class="rc-sub">Immagini o disegno a mano</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Disegno tecnico</div>
+            <div class="rc-sub">DXF, DWG, PDF quotato</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Urgenza</label>
+        <div class="radio-grid cols-3">
+          <div class="radio-card selected" onclick="selectCard(this)">
+            <div class="rc-label">Normale</div>
+            <div class="rc-sub">Tempi standard officina</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Urgente</div>
+            <div class="rc-sub">Entro 2 settimane</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Urgentissimo</div>
+            <div class="rc-sub">Entro 5 giorni lavorativi</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Note iniziali (facoltativo)</label>
+        <textarea rows="3" placeholder="Es. cancello scorrevole per accesso carrabile, larghezza ca. 4mt, cliente vuole verniciatura grigio RAL 7016..."></textarea>
+      </div>
+
+      <!-- Risultato qualificazione -->
+      <div class="status-box warn">
+        <div class="status-icon">⚠</div>
+        <div>
+          <div class="status-title">Preventivabile — Stima preliminare</div>
+          <div class="status-body">Input sufficiente per una stima. Affidabilità ridotta per assenza di misure certe. Consigliato: richiedi foto/schizzo al cliente prima di procedere.</div>
+        </div>
+      </div>
+
+      <div class="affid-wrap">
+        <div class="affid-label">Indice di affidabilità iniziale</div>
+        <div class="affid-bar-bg"><div class="affid-bar-fill" style="width:65%"></div></div>
+        <div class="affid-val">65<span style="font-size:18px;color:var(--text2);">/100</span></div>
+        <div class="affid-tag">Medio — richiede conferma dimensioni</div>
+      </div>
+
+      <div class="form-nav">
+        <a href="dashboard.html" class="btn btn-ghost">Annulla</a>
+        <button class="btn btn-primary" onclick="goTo(2)">Avanti → Configuratore</button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 2: CONFIGURATORE ========== -->
+    <div class="step-panel visible" id="panel2">
+      <div class="step-title">Configuratore <span style="color:var(--accent)">tecnico</span></div>
+      <div class="step-desc">Inserisci le dimensioni stimate e seleziona le lavorazioni necessarie. Il peso viene calcolato automaticamente.</div>
+
+      <div class="sec-label">Dimensioni stimate</div>
+      <div class="row-3">
+        <div class="field">
+          <label>Larghezza (mm)</label>
+          <input type="number" value="3800" placeholder="es. 3800">
+        </div>
+        <div class="field">
+          <label>Altezza (mm)</label>
+          <input type="number" value="1800" placeholder="es. 1800">
+        </div>
+        <div class="field">
+          <label>Profondità (mm)</label>
+          <input type="number" value="60" placeholder="es. 60">
+        </div>
+      </div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Peso stimato (kg) <span style="color:var(--accent);font-size:10px;">AUTO</span></label>
+          <input type="number" value="142" style="color:var(--accent);">
+        </div>
+        <div class="field">
+          <label>Complessità</label>
+          <select>
+            <option>Bassa — elementi standard</option>
+            <option selected>Media — qualche elemento su misura</option>
+            <option>Alta — tutto su disegno</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Materiale principale</label>
+        <div class="radio-grid cols-3">
+          <div class="radio-card selected" onclick="selectCard(this)">
+            <div class="rc-label">Ferro / Acciaio S235</div>
+            <div class="rc-sub">Carpenteria standard</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Acciaio inox 304</div>
+            <div class="rc-sub">Ambienti esterni/alimentari</div>
+          </div>
+          <div class="radio-card" onclick="selectCard(this)">
+            <div class="rc-label">Alluminio</div>
+            <div class="rc-sub">Leggerezza, antiscivolo</div>
+          </div>
+        </div>
+      </div>
+
+      <hr class="sec-div">
+      <div class="sec-label">Lavorazioni incluse</div>
+      <div class="check-grid">
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Taglio plasma</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Saldatura MIG</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">Piega CNC</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">Foratura</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Molatura / finitura</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Verniciatura</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">Zincatura (est.)</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">Sabbiatura</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Posa in opera</div>
+        </div>
+      </div>
+
+      <hr class="sec-div">
+      <div class="sec-label">Trattamenti e finiture</div>
+      <div class="row-2">
+        <div class="field">
+          <label>Colore verniciatura</label>
+          <input type="text" placeholder="es. RAL 7016 grigio antracite">
+        </div>
+        <div class="field">
+          <label>Tipo finitura</label>
+          <select>
+            <option>Satinato</option>
+            <option selected>Opaco</option>
+            <option>Lucido</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn btn-ghost" onclick="goTo(1)">← Indietro</button>
+        <button class="btn btn-primary" onclick="goTo(3)">Avanti → Materiali</button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 3: MATERIALI ========== -->
+    <div class="step-panel" id="panel3">
+      <div class="step-title">Materiali e <span style="color:var(--accent)">lavorazioni</span></div>
+      <div class="step-desc">Elenco materiali calcolato automaticamente dal configuratore. Controlla quantità e prezzi — i prezzi segnalati in giallo sono da aggiornare.</div>
+
+      <div class="sec-label">Materiali</div>
+      <table class="mat-table">
+        <thead>
+          <tr>
+            <th>Materiale</th>
+            <th>UM</th>
+            <th style="text-align:right">Qtà</th>
+            <th style="text-align:right">€/UM</th>
+            <th style="text-align:right">Totale</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Tubo quadro 40×40×3 Fe<br><span style="font-size:11px;color:var(--text2);">Aggiornato 15 apr 2026</span></td>
+            <td>ml</td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="24"></td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="4.20"></td>
+            <td style="text-align:right;font-weight:600;">€ 100,80</td>
+            <td><button class="del-btn">×</button></td>
+          </tr>
+          <tr>
+            <td>Lamiera 3mm Fe<br><span class="alert-price">⚠ Prezzo scaduto — aggiornare</span></td>
+            <td>kg</td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="38"></td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="1.85" style="color:var(--yellow);"></td>
+            <td style="text-align:right;font-weight:600;color:var(--yellow);">€ 70,30</td>
+            <td><button class="del-btn">×</button></td>
+          </tr>
+          <tr>
+            <td>Piantone tondo Ø40<br><span style="font-size:11px;color:var(--text2);">Aggiornato 10 apr 2026</span></td>
+            <td>ml</td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="9"></td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="5.60"></td>
+            <td style="text-align:right;font-weight:600;">€ 50,40</td>
+            <td><button class="del-btn">×</button></td>
+          </tr>
+          <tr>
+            <td>Ferramenta e minuteria<br><span style="font-size:11px;color:var(--text2);">Stima percentuale</span></td>
+            <td>%</td>
+            <td style="text-align:right"><input class="mat-input" type="number" value="5"></td>
+            <td style="text-align:right;color:var(--text2);">su mat.</td>
+            <td style="text-align:right;font-weight:600;">€ 11,08</td>
+            <td><button class="del-btn">×</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="add-row-btn">+ Aggiungi materiale</button>
+
+      <hr class="sec-div">
+      <div class="sec-label">Lavorazioni (manodopera)</div>
+
+      <div class="op-row header">
+        <span>Fase</span><span>Ore</span><span>€/ora</span><span>Totale</span><span></span>
+      </div>
+      <div class="op-row">
+        <span>Taglio e preparazione</span>
+        <span><input class="mat-input" type="number" value="3"></span>
+        <span style="text-align:right"><input class="mat-input" type="number" value="35"></span>
+        <span style="font-weight:600;">€ 105</span>
+        <button class="del-btn">×</button>
+      </div>
+      <div class="op-row">
+        <span>Saldatura MIG</span>
+        <span><input class="mat-input" type="number" value="6"></span>
+        <span style="text-align:right"><input class="mat-input" type="number" value="38"></span>
+        <span style="font-weight:600;">€ 228</span>
+        <button class="del-btn">×</button>
+      </div>
+      <div class="op-row">
+        <span>Molatura e finitura</span>
+        <span><input class="mat-input" type="number" value="2"></span>
+        <span style="text-align:right"><input class="mat-input" type="number" value="32"></span>
+        <span style="font-weight:600;">€ 64</span>
+        <button class="del-btn">×</button>
+      </div>
+      <div class="op-row">
+        <span>Verniciatura</span>
+        <span><input class="mat-input" type="number" value="2.5"></span>
+        <span style="text-align:right"><input class="mat-input" type="number" value="30"></span>
+        <span style="font-weight:600;">€ 75</span>
+        <button class="del-btn">×</button>
+      </div>
+      <div class="op-row">
+        <span>Posa in opera</span>
+        <span><input class="mat-input" type="number" value="4"></span>
+        <span style="text-align:right"><input class="mat-input" type="number" value="40"></span>
+        <span style="font-weight:600;">€ 160</span>
+        <button class="del-btn">×</button>
+      </div>
+      <button class="add-row-btn">+ Aggiungi fase lavorazione</button>
+
+      <hr class="sec-div">
+      <div class="sec-label">Costi esterni</div>
+      <div class="row-2">
+        <div class="field">
+          <label>Trasporto (andata + ritorno)</label>
+          <input type="number" value="80" placeholder="€">
+        </div>
+        <div class="field">
+          <label>Consumabili (automatico)</label>
+          <input type="number" value="35" style="color:var(--text2);" readonly>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn btn-ghost" onclick="goTo(2)">← Indietro</button>
+        <button class="btn btn-primary" onclick="goTo(4)">Avanti → Prezzi</button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 4: PREZZI E MARGINI ========== -->
+    <div class="step-panel" id="panel4">
+      <div class="step-title">Prezzi e <span style="color:var(--accent)">margini</span></div>
+      <div class="step-desc">Il motore ha calcolato i costi e il coefficiente di rischio. Scegli il prezzo da applicare al cliente.</div>
+
+      <!-- RIEPILOGO COSTI -->
+      <div class="sec-label">Riepilogo costi</div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:16px 20px;margin-bottom:20px;">
+        <div class="cost-row section-head"><span>Materiali</span></div>
+        <div class="cost-row"><span>Materiali diretti</span><span>€ 232,58</span></div>
+        <div class="cost-row"><span>Ferramenta e minuteria</span><span>€ 11,08</span></div>
+        <div class="cost-row section-head"><span>Manodopera</span></div>
+        <div class="cost-row"><span>17,5 ore × tariffa media €35,8</span><span>€ 632,00</span></div>
+        <div class="cost-row section-head"><span>Altri costi</span></div>
+        <div class="cost-row"><span>Trasporto</span><span>€ 80,00</span></div>
+        <div class="cost-row"><span>Consumabili</span><span>€ 35,00</span></div>
+        <div class="cost-row"><span>Overhead (18%)</span><span>€ 178,49</span></div>
+        <div class="cost-row total"><span>Costo pieno</span><span style="color:var(--accent);">€ 1.169,15</span></div>
+      </div>
+
+      <!-- RISCHIO -->
+      <div class="sec-label">Coefficiente rischio</div>
+      <div class="risk-box">
+        <div class="risk-factors">
+          <div class="risk-factor"><span>Mancanza disegno tecnico</span><span class="rf-val active">+15%</span></div>
+          <div class="risk-factor"><span>Input foto/schizzo</span><span class="rf-val active">+10%</span></div>
+          <div class="risk-factor"><span>Urgenza normale</span><span class="rf-val">+0%</span></div>
+          <div class="risk-factor"><span>Cliente noto</span><span class="rf-val">+0%</span></div>
+          <div class="risk-factor"><span>Posa in opera</span><span class="rf-val active">+10%</span></div>
+          <div class="risk-factor"><span>Dimensioni stimate</span><span class="rf-val active">+5%</span></div>
+        </div>
+        <div class="risk-total">
+          <div class="rt-label">Rischio totale</div>
+          <div class="rt-val">40%</div>
+        </div>
+      </div>
+
+      <!-- PREZZI -->
+      <div class="sec-label">Motore prezzi</div>
+      <div class="price-grid">
+        <div class="price-card">
+          <div class="pc-label">Minimo sostenibile</div>
+          <div class="pc-value">€ 1.462</div>
+          <div class="pc-margin" style="color:var(--red);">Margine 20% — limite assoluto</div>
+        </div>
+        <div class="price-card">
+          <div class="pc-label">Prezzo tecnico</div>
+          <div class="pc-value">€ 1.637</div>
+          <div class="pc-margin">Margine 29% — target aziendale</div>
+        </div>
+        <div class="price-card recommended">
+          <div class="pc-label">Consigliato <span style="color:var(--accent);">★</span></div>
+          <div class="pc-value" style="color:var(--accent);">€ 2.090</div>
+          <div class="pc-margin">Margine 44% — include rischio 40%</div>
+          <div class="pc-tag">Proteggiti dal rischio di stima</div>
+        </div>
+        <div class="price-card">
+          <div class="pc-label">Prezzo valore</div>
+          <div class="pc-value">€ 2.400</div>
+          <div class="pc-margin" style="color:var(--green);">Margine 51% — percezione mercato</div>
+        </div>
+      </div>
+
+      <!-- SLIDER MARGINE -->
+      <div class="sec-label">Margine personalizzato</div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:20px;">
+        <div class="slider-row">
+          <span>Margine minimo 20%</span>
+          <span style="font-family:'Playfair Display',serif;font-size:20px;" id="marginDisplay">35%</span>
+          <span>Target 30%</span>
+        </div>
+        <input type="range" min="20" max="60" value="35" oninput="updateMargin(this.value)">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:8px;">
+          <span>Prezzo risultante</span>
+          <span id="priceDisplay" style="font-size:15px;font-weight:700;color:var(--text);">€ 1.798</span>
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn btn-ghost" onclick="goTo(3)">← Indietro</button>
+        <button class="btn btn-primary" onclick="goTo(5)">Avanti → Revisione</button>
+      </div>
+    </div>
+
+    <!-- ========== STEP 5: REVISIONE ========== -->
+    <div class="step-panel" id="panel5">
+      <div class="step-title">Revisione e <span style="color:var(--accent)">output</span></div>
+      <div class="step-desc">Controlla il preventivo prima di generare il PDF o inviarlo al cliente.</div>
+
+      <div class="row-2">
+        <div class="field">
+          <label>Validità offerta</label>
+          <select>
+            <option>15 giorni</option>
+            <option selected>30 giorni</option>
+            <option>60 giorni</option>
+            <option>A richiesta</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Pagamento</label>
+          <select>
+            <option>30% anticipato, saldo consegna</option>
+            <option selected>50% anticipato, 50% consegna</option>
+            <option>100% anticipato</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Descrizione per il cliente</label>
+        <textarea rows="4">Fornitura e posa in opera di cancello scorrevole in acciaio Fe verniciato RAL 7016, dimensioni ca. 3800×1800mm, completo di guide, carrelli e automatismo. Incluso trasporto e installazione.</textarea>
+      </div>
+
+      <div class="sec-label">Esclusioni standard</div>
+      <div class="check-grid" style="margin-bottom:20px;">
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Opere murarie</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Allacciamenti elettrici</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Permessi edilizi</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">Smaltimento vecchio</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Varianti in corso d'opera</div>
+        </div>
+        <div class="check-item checked" onclick="toggleCheck(this)">
+          <div class="cb">✓</div><div class="cb-label">Posa in opera</div>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <div class="cb"></div><div class="cb-label">IVA</div>
+        </div>
+      </div>
+
+      <!-- PREVIEW PREVENTIVO CLIENTE -->
+      <div class="sec-label">Anteprima preventivo cliente</div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:24px;">
+        <div style="border-bottom:1px solid var(--border);padding-bottom:16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:20px;">Officina24 Srl</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:4px;">Via dell'Artigianato 12 — Bergamo</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--text2);">PV-2026-042 — Rev.1</div>
+            <div style="font-size:12px;color:var(--text2);">30 aprile 2026</div>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">OFFERTA A:</div>
+          <div style="font-weight:600;">Logistica Verdi SpA</div>
+          <div style="font-size:12px;color:var(--text2);">Via Roma 45 — Milano</div>
+        </div>
+        <div style="margin-bottom:16px;font-size:13.5px;line-height:1.6;">
+          Fornitura e posa in opera di cancello scorrevole in acciaio Fe verniciato RAL 7016, dimensioni ca. 3800×1800mm, completo di guide, carrelli e automatismo. Incluso trasporto e installazione.
+        </div>
+        <div style="background:var(--bg3);padding:14px 18px;display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--text2);">Importo totale (IVA esclusa)</span>
+          <span style="font-family:'Playfair Display',serif;font-size:28px;color:var(--accent);">€ 2.090,00</span>
+        </div>
+        <div style="margin-top:14px;font-size:12px;color:var(--text2);line-height:1.6;">
+          <strong style="color:var(--text3);">Non incluso:</strong> opere murarie, allacciamenti elettrici, permessi edilizi, varianti in corso d'opera.
+          <br><strong style="color:var(--text3);">Validità offerta:</strong> 30 giorni dalla data di emissione.
+          <br><strong style="color:var(--text3);">Pagamento:</strong> 50% anticipato, 50% alla consegna.
+        </div>
+      </div>
+
+      <div class="form-nav">
+        <button class="btn btn-ghost" onclick="goTo(4)">← Indietro</button>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-outline">Salva bozza</button>
+          <button class="btn btn-outline">⬇ Genera PDF</button>
+          <button class="btn btn-primary">✉ Invia al cliente</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SUMMARY SIDEBAR -->
+  <div class="summary-sidebar">
+    <div class="summary-title">Riepilogo preventivo</div>
+
+    <div class="sum-section">
+      <div class="sum-row"><span class="sum-label">Cliente</span><span class="sum-value">Logistica Verdi SpA</span></div>
+      <div class="sum-row"><span class="sum-label">Tipo</span><span class="sum-value">Cancello scorrevole</span></div>
+      <div class="sum-row"><span class="sum-label">Materiale</span><span class="sum-value">Acciaio Fe</span></div>
+      <div class="sum-row"><span class="sum-label">Dimensioni</span><span class="sum-value">3800×1800 mm</span></div>
+      <div class="sum-row"><span class="sum-label">Peso stimato</span><span class="sum-value">142 kg</span></div>
+    </div>
+
+    <hr class="sum-sep">
+
+    <div class="sum-section">
+      <div class="sum-row"><span class="sum-label">Materiali</span><span class="sum-value">€ 243,66</span></div>
+      <div class="sum-row"><span class="sum-label">Manodopera (17.5h)</span><span class="sum-value">€ 632,00</span></div>
+      <div class="sum-row"><span class="sum-label">Costi esterni</span><span class="sum-value">€ 115,00</span></div>
+      <div class="sum-row"><span class="sum-label">Overhead 18%</span><span class="sum-value">€ 178,49</span></div>
+    </div>
+
+    <hr class="sum-sep">
+    <div class="sum-total"><span>Costo pieno</span><span style="color:var(--accent);">€ 1.169</span></div>
+
+    <div class="reliability-badge">
+      <div class="rb-label">Affidabilità preventivo</div>
+      <div class="rb-value">60<span style="font-size:16px;color:var(--text2);">/100</span></div>
+      <div class="rb-sub">Rischio 40% — mancano disegni tecnici</div>
+    </div>
+
+    <hr class="sum-sep" style="margin:16px 0;">
+
+    <div style="font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:10px;">Prezzi suggeriti</div>
+    <div class="sum-row"><span class="sum-label">Minimo</span><span style="color:var(--red);font-weight:600;">€ 1.462</span></div>
+    <div class="sum-row"><span class="sum-label">Tecnico</span><span class="sum-value">€ 1.637</span></div>
+    <div class="sum-row"><span class="sum-label">Consigliato</span><span style="color:var(--accent);font-weight:700;">€ 2.090</span></div>
+    <div class="sum-row"><span class="sum-label">Valore</span><span class="sum-value">€ 2.400</span></div>
+
+    <hr class="sum-sep" style="margin:14px 0;">
+    <div style="font-size:11px;color:var(--text2);">Simile a: PV-2026-028<br>Cancello scorrevole Edilmetal — €5.800 — margine reale 31%</div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 2;
+
+  function goTo(step) {
+    // Hide all panels
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('visible'));
+    document.getElementById('panel' + step).classList.add('visible');
+
+    // Update step indicators
+    const items = document.querySelectorAll('.step-item');
+    items.forEach((item, i) => {
+      item.classList.remove('done', 'active', 'inactive');
+      const num = item.querySelector('.step-num');
+      if (i + 1 < step) {
+        item.classList.add('done');
+        num.textContent = '✓';
+      } else if (i + 1 === step) {
+        item.classList.add('active');
+        num.textContent = i + 1;
+      } else {
+        item.classList.add('inactive');
+        num.textContent = i + 1;
+      }
+    });
+
+    currentStep = step;
+    window.scrollTo(0, 0);
+  }
+
+  function selectCard(el) {
+    const group = el.parentElement;
+    group.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+    const cb = el.querySelector('.cb');
+    cb.textContent = el.classList.contains('checked') ? '✓' : '';
+  }
+
+  function updateMargin(val) {
+    document.getElementById('marginDisplay').textContent = val + '%';
+    const cost = 1169.15;
+    const price = Math.round(cost / (1 - val / 100));
+    document.getElementById('priceDisplay').textContent = '€ ' + price.toLocaleString('it-IT');
+  }
+</script>
+</body>
+</html>

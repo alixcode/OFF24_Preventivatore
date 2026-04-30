@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFF24 — Mockup Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d141a;
+    --bg2: #1d1e20;
+    --bg3: #211e1b;
+    --accent: #cc6333;
+    --accent-light: #ffeacc;
+    --text: #ffffff;
+    --text2: #56585e;
+    --border: rgba(255,255,255,0.08);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .container { text-align: center; max-width: 600px; padding: 48px 24px; }
+  h1 { font-family: 'Playfair Display', serif; font-size: 40px; margin-bottom: 8px; }
+  .sub { color: var(--text2); margin-bottom: 48px; font-size: 15px; }
+  .accent { color: var(--accent); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  a.card {
+    display: block; background: var(--bg2); border: 1px solid var(--border);
+    padding: 28px 20px; text-decoration: none; color: var(--text);
+    transition: border-color 0.2s, transform 0.1s;
+  }
+  a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  a.card .icon { font-size: 28px; margin-bottom: 12px; }
+  a.card .title { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+  a.card .desc { color: var(--text2); font-size: 13px; line-height: 1.5; }
+  .tag { display: inline-block; background: var(--accent); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; letter-spacing: 0.5px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="accent" style="font-size:12px;letter-spacing:2px;font-weight:700;margin-bottom:16px;">OFF24 PREVENTIVATORE</div>
+  <h1>Mockup <span class="accent">Navigator</span></h1>
+  <p class="sub">Clicca una schermata per aprirla — MVP Officina24</p>
+  <div class="grid">
+    <a class="card" href="dashboard.html">
+      <div class="icon">◈</div>
+      <div class="title">Dashboard</div>
+      <div class="desc">KPI, lista preventivi recenti, accesso rapido</div>
+    </a>
+    <a class="card" href="wizard.html">
+      <div class="tag">CORE</div>
+      <div class="title">Wizard Preventivo</div>
+      <div class="desc">Flusso completo 5 step — da richiesta a prezzo</div>
+    </a>
+    <a class="card" href="materiali.html">
+      <div class="icon">◫</div>
+      <div class="title">Listino Materiali</div>
+      <div class="desc">Gestione prezzi, alert scadenza, storico</div>
+    </a>
+    <a class="card" href="preventivo-detail.html">
+      <div class="icon">◧</div>
+      <div class="title">Dettaglio Preventivo</div>
+      <div class="desc">Vista analitica interna + versioni</div>
+    </a>
+  </div>
+</div>
+</body>
+</html>

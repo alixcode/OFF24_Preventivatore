@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFF24 — Dettaglio Preventivo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d141a; --bg2: #1d1e20; --bg3: #211e1b;
+    --accent: #cc6333; --accent-h: #b5522a;
+    --text: #ffffff; --text2: #56585e; --text3: #8a8c92;
+    --border: rgba(255,255,255,0.08);
+    --green: #4caf7d; --red: #e05c5c; --yellow: #d4a843;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 220px; min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; }
+  .logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-family: 'Playfair Display', serif; font-size: 20px; }
+  .logo-sub { font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); display: inline-block; margin-right: 6px; }
+  nav { flex: 1; padding: 16px 0; }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; color: var(--text3); cursor: pointer; transition: color 0.15s, background 0.15s; font-size: 13.5px; text-decoration: none; border-left: 2px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(204,99,51,0.08); }
+  .nav-icon { width: 16px; text-align: center; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .avatar { width: 30px; height: 30px; background: var(--accent); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .user-pill { display: flex; align-items: center; gap: 10px; }
+  .user-info .name { font-size: 13px; font-weight: 500; }
+  .user-info .role { font-size: 11px; color: var(--text2); }
+
+  .main { margin-left: 220px; flex: 1; }
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .back-link { font-size: 12px; color: var(--text2); text-decoration: none; display: block; margin-bottom: 4px; }
+  .back-link:hover { color: var(--accent); }
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 20px; }
+  .topbar-right { display: flex; gap: 10px; align-items: center; }
+  .btn { padding: 8px 18px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text2); }
+
+  .content { padding: 28px 32px; }
+  .section-label { font-size: 11px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 12px; }
+
+  /* HEADER */
+  .detail-header { display: grid; grid-template-columns: 1fr auto; gap: 24px; margin-bottom: 28px; }
+  .dh-main .quote-num { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .dh-main .quote-title { font-family: 'Playfair Display', serif; font-size: 28px; margin-bottom: 8px; }
+  .dh-main .quote-client { font-size: 14px; color: var(--text2); }
+  .dh-main .quote-client strong { color: var(--text); }
+
+  /* VERSIONS */
+  .versions-row { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; }
+  .ver-pill { padding: 6px 14px; font-size: 12px; font-weight: 700; border: 1px solid var(--border); cursor: pointer; color: var(--text2); transition: 0.15s; }
+  .ver-pill:hover { border-color: var(--accent); color: var(--accent); }
+  .ver-pill.current { border-color: var(--accent); color: var(--accent); background: rgba(204,99,51,0.1); }
+  .ver-add { padding: 6px 14px; font-size: 12px; color: var(--text2); border: 1px dashed var(--border); cursor: pointer; background: none; font-family: 'DM Sans', sans-serif; }
+  .ver-add:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* TABS */
+  .tabs-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+  .tab { padding: 10px 20px; font-size: 13.5px; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; color: var(--text2); transition: 0.15s; }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover { color: var(--text); }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); }
+  .card-header { padding: 14px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .card-title { font-size: 13.5px; font-weight: 600; }
+
+  /* COST BREAKDOWN */
+  .cost-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .cost-section:last-child { border-bottom: none; }
+  .cs-header { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; font-weight: 700; margin-bottom: 10px; }
+  .cs-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; }
+  .cs-label { color: var(--text3); }
+  .cs-value { font-weight: 500; }
+
+  /* PRICE SUMMARY */
+  .price-sum { padding: 20px; }
+  .ps-row { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .ps-row:last-child { border-bottom: none; }
+  .ps-label { color: var(--text2); }
+  .ps-final { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0 4px; }
+  .ps-final-label { font-size: 12px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+  .ps-final-val { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--accent); }
+
+  /* MARGIN METER */
+  .margin-meter { margin-top: 12px; }
+  .mm-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .mm-bar { height: 6px; background: var(--border); position: relative; }
+  .mm-fill { height: 100%; }
+  .mm-min-line { position: absolute; left: 20%; top: -4px; bottom: -4px; width: 1px; background: var(--red); }
+  .mm-min-label { position: absolute; left: 20%; top: -18px; font-size: 10px; color: var(--red); transform: translateX(-50%); }
+  .mm-target-line { position: absolute; left: 30%; top: -4px; bottom: -4px; width: 1px; background: var(--text2); }
+
+  /* BADGE */
+  .badge { display: inline-block; padding: 4px 12px; font-size: 12px; font-weight: 700; }
+  .badge-inviato { background: rgba(204,99,51,0.2); color: var(--accent); }
+
+  /* AUDIT */
+  .audit-row { padding: 12px 20px; border-bottom: 1px solid var(--border); display: flex; gap: 14px; align-items: flex-start; font-size: 13px; }
+  .audit-row:last-child { border-bottom: none; }
+  .audit-time { font-size: 11px; color: var(--text2); min-width: 80px; margin-top: 2px; }
+  .audit-who { font-weight: 600; margin-right: 6px; }
+  .audit-what { color: var(--text3); }
+
+  .risk-indicator { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .ri-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .ri-bar { height: 4px; background: var(--border); margin-bottom: 6px; }
+  .ri-fill { height: 100%; background: var(--accent); }
+  .ri-bottom { display: flex; justify-content: space-between; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div><span class="logo-dot"></span><span class="logo-name">OFF24</span></div>
+    <div class="logo-sub">PREVENTIVATORE</div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Principale</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">▪</span> Dashboard</a>
+      <a class="nav-item" href="wizard.html"><span class="nav-icon">+</span> Nuovo preventivo</a>
+      <a class="nav-item active" href="#"><span class="nav-icon">◈</span> Preventivi</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◉</span> Commesse</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestione</div>
+      <a class="nav-item" href="materiali.html"><span class="nav-icon">◫</span> Materiali</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◧</span> Fornitori</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◦</span> Clienti</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar">AB</div>
+      <div class="user-info">
+        <div class="name">Alice Brocca</div>
+        <div class="role">Officina24 Srl</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <a href="dashboard.html" class="back-link">← Preventivi</a>
+      <div class="topbar-title">PV-2026-041 — Rev. 1</div>
+    </div>
+    <div class="topbar-right">
+      <span class="badge badge-inviato">Inviato</span>
+      <button class="btn btn-ghost">⬇ PDF Cliente</button>
+      <button class="btn btn-outline">+ Nuova versione</button>
+      <button class="btn btn-primary">✓ Converti in commessa</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- HEADER -->
+    <div class="detail-header">
+      <div class="dh-main">
+        <div class="quote-num">PV-2026-041 · emesso 29 apr 2026 · valido 30 giorni</div>
+        <div class="quote-title">Scala elicoidale inox — 3 rampe</div>
+        <div class="quote-client"><strong>Costruzioni Rossi</strong> · Via Torino 88, Milano</div>
+      </div>
+    </div>
+
+    <!-- VERSIONI -->
+    <div class="section-label">Versioni</div>
+    <div class="versions-row">
+      <div class="ver-pill">V1 — €12.400 <span style="color:var(--text2);font-weight:400">19 apr</span></div>
+      <div class="ver-pill current">V2 — €14.800 <span style="color:var(--text2);font-weight:400">29 apr</span></div>
+      <button class="ver-add">+ Nuova versione</button>
+      <span style="font-size:11px;color:var(--text2);margin-left:8px;">Δ V1→V2: +€2.400 (+19%) — aggiunta posa in opera e trattamento superficiale</span>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs-row">
+      <div class="tab active">Analisi costi</div>
+      <div class="tab">Vista cliente</div>
+      <div class="tab">Storico modifiche</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="two-col">
+
+      <!-- LEFT: COSTI -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Breakdown costi — Rev. 2</span>
+            <span style="font-size:12px;color:var(--text2);">17.5 ore tot · 142 kg</span>
+          </div>
+
+          <div class="cost-section">
+            <div class="cs-header">Materiali</div>
+            <div class="cs-row"><span class="cs-label">Tubo quadro 40×40×3 Fe — 24ml</span><span class="cs-value">€ 100,80</span></div>
+            <div class="cs-row"><span class="cs-label">Acciaio inox 304 lamiera 2mm — 38kg</span><span class="cs-value">€ 220,40</span></div>
+            <div class="cs-row"><span class="cs-label">Piantone tondo Ø40 — 9ml</span><span class="cs-value">€ 50,40</span></div>
+            <div class="cs-row"><span class="cs-label">Ferramenta e minuteria (5%)</span><span class="cs-value">€ 18,58</span></div>
+            <div class="cs-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px;font-weight:600;"><span>Subtotale materiali</span><span>€ 390,18</span></div>
+          </div>
+
+          <div class="cost-section">
+            <div class="cs-header">Manodopera</div>
+            <div class="cs-row"><span class="cs-label">Taglio e preparazione — 3h × €35</span><span class="cs-value">€ 105,00</span></div>
+            <div class="cs-row"><span class="cs-label">Saldatura TIG inox — 8h × €42</span><span class="cs-value">€ 336,00</span></div>
+            <div class="cs-row"><span class="cs-label">Molatura e finitura — 2h × €32</span><span class="cs-value">€ 64,00</span></div>
+            <div class="cs-row"><span class="cs-label">Lucidatura inox — 3h × €38</span><span class="cs-value">€ 114,00</span></div>
+            <div class="cs-row"><span class="cs-label">Posa in opera — 5h × €40</span><span class="cs-value">€ 200,00</span></div>
+            <div class="cs-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px;font-weight:600;"><span>Subtotale manodopera</span><span>€ 819,00</span></div>
+          </div>
+
+          <div class="cost-section">
+            <div class="cs-header">Altri costi</div>
+            <div class="cs-row"><span class="cs-label">Trasporto andata/ritorno</span><span class="cs-value">€ 120,00</span></div>
+            <div class="cs-row"><span class="cs-label">Consumabili (argon, elettrodi, mole)</span><span class="cs-value">€ 55,00</span></div>
+            <div class="cs-row"><span class="cs-label">Overhead aziendale 18%</span><span class="cs-value">€ 249,32</span></div>
+            <div class="cs-row" style="padding-top:8px;border-top:1px solid var(--border);margin-top:4px;font-weight:700;font-size:15px;"><span>Costo pieno</span><span style="color:var(--accent);">€ 1.633,50</span></div>
+          </div>
+        </div>
+
+        <!-- AUDIT TRAIL -->
+        <div class="card" style="margin-top:16px;">
+          <div class="card-header"><span class="card-title">Storico modifiche</span></div>
+          <div class="audit-row">
+            <span class="audit-time">29 apr 16:42</span>
+            <div><span class="audit-who">Alice B.</span><span class="audit-what">Preventivo inviato al cliente via email</span></div>
+          </div>
+          <div class="audit-row">
+            <span class="audit-time">29 apr 15:10</span>
+            <div><span class="audit-who">Alice B.</span><span class="audit-what">Creata Rev.2 — aggiunta posa in opera +€200, agg. prezzo inox +€28</span></div>
+          </div>
+          <div class="audit-row">
+            <span class="audit-time">19 apr 09:30</span>
+            <div><span class="audit-who">Alice B.</span><span class="audit-what">Creato Rev.1 — prima versione preventivo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: SIDEBAR -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- PRICE SUMMARY -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Prezzo applicato</span></div>
+          <div class="price-sum">
+            <div class="ps-row"><span class="ps-label">Costo pieno</span><span>€ 1.633,50</span></div>
+            <div class="ps-row"><span class="ps-label">Rischio applicato (30%)</span><span style="color:var(--accent);">+ €490,05</span></div>
+            <div class="ps-row"><span class="ps-label">Prezzo consigliato</span><span>€ 14.200</span></div>
+            <div class="ps-final">
+              <div>
+                <div class="ps-final-label">Prezzo offerto</div>
+                <div class="ps-final-val">€ 14.800</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:12px;color:var(--text2);">Margine</div>
+                <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--green);">34%</div>
+              </div>
+            </div>
+            <div class="margin-meter">
+              <div class="mm-label"><span>Margine minimo 20%</span><span>Target 30%</span></div>
+              <div class="mm-bar">
+                <div class="mm-min-line"></div>
+                <div class="mm-target-line"></div>
+                <div class="mm-fill" style="width:34%;background:var(--green);"></div>
+              </div>
+            </div>
+          </div>
+          <div class="risk-indicator">
+            <div class="ri-label">Rischio applicato</div>
+            <div class="ri-bar"><div class="ri-fill" style="width:30%;"></div></div>
+            <div class="ri-bottom">
+              <span style="color:var(--accent);">30%</span>
+              <span style="font-size:11px;color:var(--text2);">Input foto, mancano quote</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOTE INTERNE -->
+        <div class="card">
+          <div class="card-header"><span class="card-title">Note interne</span></div>
+          <div style="padding:16px 20px;">
+            <div style="font-size:13px;color:var(--text3);line-height:1.6;">
+              Cliente ha richiesto preventivo dopo sopralluogo verbale. Misure non certe — stimate su foto. Da verificare l'ancoraggio alla struttura esistente prima della posa.
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--text2);">Simile a: PV-2025-091 (scala elicoidale Ø120cm, 2 rampe) — costo reale +8% vs preventivo</div>
+          </div>
+        </div>
+
+        <!-- AZIONI -->
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn btn-primary" style="width:100%;padding:12px;">✓ Converti in commessa</button>
+          <button class="btn btn-outline" style="width:100%;padding:10px;">+ Crea Rev. 3</button>
+          <button class="btn btn-ghost" style="width:100%;padding:10px;">⬇ Scarica PDF analitico</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

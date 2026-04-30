@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFF24 — Listino Materiali</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d141a; --bg2: #1d1e20; --bg3: #211e1b;
+    --accent: #cc6333; --accent-h: #b5522a;
+    --text: #ffffff; --text2: #56585e; --text3: #8a8c92;
+    --border: rgba(255,255,255,0.08);
+    --green: #4caf7d; --red: #e05c5c; --yellow: #d4a843;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 220px; min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; }
+  .logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-family: 'Playfair Display', serif; font-size: 20px; }
+  .logo-sub { font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); display: inline-block; margin-right: 6px; }
+  nav { flex: 1; padding: 16px 0; }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; color: var(--text3); cursor: pointer; transition: color 0.15s, background 0.15s; font-size: 13.5px; text-decoration: none; border-left: 2px solid transparent; }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(204,99,51,0.08); }
+  .nav-icon { width: 16px; text-align: center; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .avatar { width: 30px; height: 30px; background: var(--accent); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .user-pill { display: flex; align-items: center; gap: 10px; }
+  .user-info .name { font-size: 13px; font-weight: 500; }
+  .user-info .role { font-size: 11px; color: var(--text2); }
+
+  .main { margin-left: 220px; flex: 1; }
+  .topbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 22px; }
+  .back-link { font-size: 12px; color: var(--text2); text-decoration: none; display: block; margin-bottom: 4px; }
+  .back-link:hover { color: var(--accent); }
+  .btn { padding: 8px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: background 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+
+  .content { padding: 32px; }
+  .section-label { font-size: 11px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
+
+  /* ALERT BAR */
+  .alert-bar { display: flex; align-items: center; gap: 14px; background: rgba(212,168,67,0.1); border: 1px solid rgba(212,168,67,0.3); padding: 14px 20px; margin-bottom: 28px; }
+  .alert-icon { font-size: 20px; color: var(--yellow); }
+  .alert-text .t { font-size: 13.5px; font-weight: 600; }
+  .alert-text .s { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .alert-action { margin-left: auto; font-size: 12.5px; color: var(--yellow); cursor: pointer; border: 1px solid rgba(212,168,67,0.4); padding: 6px 14px; background: none; font-family: 'DM Sans', sans-serif; }
+
+  /* FILTERS */
+  .filters-row { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; }
+  .filter-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13.5px; padding: 8px 14px; outline: none; width: 240px; }
+  .filter-input:focus { border-color: var(--accent); }
+  .filter-input::placeholder { color: var(--text2); }
+  .filter-tab { padding: 8px 16px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); color: var(--text2); background: none; font-family: 'DM Sans', sans-serif; transition: 0.15s; }
+  .filter-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(204,99,51,0.08); }
+  .filter-tab:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  /* TABLE */
+  .card { background: var(--bg2); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 20px; text-align: left; font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:nth-child(even) td { background: var(--bg3); }
+  tbody tr:hover td { background: rgba(204,99,51,0.06); }
+  tbody td { padding: 13px 20px; font-size: 13.5px; }
+
+  .mat-name { font-weight: 500; }
+  .mat-code { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .badge { display: inline-block; padding: 3px 10px; font-size: 11px; font-weight: 700; }
+  .badge-ok { background: rgba(76,175,125,0.15); color: var(--green); }
+  .badge-warn { background: rgba(212,168,67,0.15); color: var(--yellow); }
+  .badge-exp { background: rgba(224,92,92,0.15); color: var(--red); }
+
+  .trend-up { color: var(--red); font-size: 11px; }
+  .trend-down { color: var(--green); font-size: 11px; }
+  .trend-flat { color: var(--text2); font-size: 11px; }
+
+  .price-val { font-weight: 600; font-family: 'DM Sans', sans-serif; }
+
+  /* STAT CARDS */
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); padding: 16px 18px; }
+  .stat-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; }
+  .stat-sub { font-size: 11.5px; color: var(--text2); margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div><span class="logo-dot"></span><span class="logo-name">OFF24</span></div>
+    <div class="logo-sub">PREVENTIVATORE</div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Principale</div>
+      <a class="nav-item" href="dashboard.html"><span class="nav-icon">▪</span> Dashboard</a>
+      <a class="nav-item" href="wizard.html"><span class="nav-icon">+</span> Nuovo preventivo</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◈</span> Preventivi</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◉</span> Commesse</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestione</div>
+      <a class="nav-item active" href="materiali.html"><span class="nav-icon">◫</span> Materiali</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◧</span> Fornitori</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◦</span> Clienti</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a class="nav-item" href="#"><span class="nav-icon">◌</span> Impostazioni</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar">AB</div>
+      <div class="user-info">
+        <div class="name">Alice Brocca</div>
+        <div class="role">Officina24 Srl</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <a href="index.html" class="back-link">← Mockup navigator</a>
+      <div class="topbar-title">Listino Materiali</div>
+    </div>
+    <button class="btn btn-primary">+ Aggiungi materiale</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ALERT PREZZI SCADUTI -->
+    <div class="alert-bar">
+      <div class="alert-icon">⚠</div>
+      <div class="alert-text">
+        <div class="t">3 prezzi materiali scaduti — preventivi in uso potrebbero essere imprecisi</div>
+        <div class="s">Ferro tondo Ø16, Lamiera 3mm Fe, Acciaio inox 304 — aggiornamento richiesto</div>
+      </div>
+      <button class="alert-action">Aggiorna tutti</button>
+    </div>
+
+    <!-- STAT -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-label">Materiali a listino</div>
+        <div class="stat-value">48</div>
+        <div class="stat-sub">3 categorie</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Prezzi aggiornati</div>
+        <div class="stat-value" style="color:var(--green);">45</div>
+        <div class="stat-sub">Entro 30 giorni</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Prezzi scaduti</div>
+        <div class="stat-value" style="color:var(--red);">3</div>
+        <div class="stat-sub">Oltre 30 giorni</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Var. media prezzi</div>
+        <div class="stat-value" style="color:var(--red);">+4.2%</div>
+        <div class="stat-sub">Ultimi 30 giorni</div>
+      </div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filters-row">
+      <input class="filter-input" type="text" placeholder="Cerca materiale...">
+      <button class="filter-tab active">Tutti (48)</button>
+      <button class="filter-tab">Ferro / Acciaio (28)</button>
+      <button class="filter-tab">Inox (12)</button>
+      <button class="filter-tab">Alluminio (5)</button>
+      <button class="filter-tab" style="color:var(--red);border-color:rgba(224,92,92,0.4);">Scaduti (3)</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+      <table>
+        <thead>
+          <tr>
+            <th>Materiale</th>
+            <th>UM</th>
+            <th style="text-align:right">Prezzo attuale</th>
+            <th style="text-align:right">Var. 30gg</th>
+            <th>Fornitore</th>
+            <th>Aggiornato</th>
+            <th>Stato</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="mat-name">Tubo quadro 40×40×3 Fe</div>
+              <div class="mat-code">MAT-001 · Acciaio S235</div>
+            </td>
+            <td style="color:var(--text2)">ml</td>
+            <td style="text-align:right"><span class="price-val">€ 4,20</span></td>
+            <td style="text-align:right"><span class="trend-up">↑ +2.4%</span></td>
+            <td style="font-size:13px;">Ferromet Srl</td>
+            <td style="font-size:12px;color:var(--text2);">15 apr 2026</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Lamiera 3mm Fe</div>
+              <div class="mat-code">MAT-002 · Acciaio S235 — <span style="color:var(--red)">⚠ Usato in 4 preventivi aperti</span></div>
+            </td>
+            <td style="color:var(--text2)">kg</td>
+            <td style="text-align:right"><span class="price-val" style="color:var(--yellow);">€ 1,85</span></td>
+            <td style="text-align:right"><span class="trend-up">↑ +6.1%</span></td>
+            <td style="font-size:13px;">Ferromet Srl</td>
+            <td style="font-size:12px;color:var(--red);">22 mar 2026</td>
+            <td><span class="badge badge-exp">Scaduto</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:700;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Ferro tondo Ø16</div>
+              <div class="mat-code">MAT-003 · Acciaio S235</div>
+            </td>
+            <td style="color:var(--text2)">ml</td>
+            <td style="text-align:right"><span class="price-val" style="color:var(--yellow);">€ 2,10</span></td>
+            <td style="text-align:right"><span class="trend-flat">→ 0%</span></td>
+            <td style="font-size:13px;">Acciaierie Nord</td>
+            <td style="font-size:12px;color:var(--red);">18 mar 2026</td>
+            <td><span class="badge badge-exp">Scaduto</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:700;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Tubo tondo Ø40×2 Fe</div>
+              <div class="mat-code">MAT-004 · Acciaio S235</div>
+            </td>
+            <td style="color:var(--text2)">ml</td>
+            <td style="text-align:right"><span class="price-val">€ 3,60</span></td>
+            <td style="text-align:right"><span class="trend-down">↓ -1.2%</span></td>
+            <td style="font-size:13px;">Ferromet Srl</td>
+            <td style="font-size:12px;color:var(--text2);">20 apr 2026</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Acciaio inox 304 — lamiera 2mm</div>
+              <div class="mat-code">MAT-012 · Inox 304</div>
+            </td>
+            <td style="color:var(--text2)">kg</td>
+            <td style="text-align:right"><span class="price-val" style="color:var(--yellow);">€ 5,80</span></td>
+            <td style="text-align:right"><span class="trend-up">↑ +8.3%</span></td>
+            <td style="font-size:13px;">InoxPro Italia</td>
+            <td style="font-size:12px;color:var(--red);">10 mar 2026</td>
+            <td><span class="badge badge-exp">Scaduto</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:700;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Angolare 40×40×4 Fe</div>
+              <div class="mat-code">MAT-005 · Acciaio S235</div>
+            </td>
+            <td style="color:var(--text2)">ml</td>
+            <td style="text-align:right"><span class="price-val">€ 3,90</span></td>
+            <td style="text-align:right"><span class="trend-flat">→ 0%</span></td>
+            <td style="font-size:13px;">Ferromet Srl</td>
+            <td style="font-size:12px;color:var(--text2);">22 apr 2026</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;">Aggiorna</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="mat-name">Piastrina 100×100×8 Fe</div>
+              <div class="mat-code">MAT-008 · Acciaio S235</div>
+            </td>
+            <td style="color:var(--text2)">pz</td>
+            <td style="text-align:right"><span class="price-val">€ 1,40</span></td>
+            <td style="text-align:right"><span class="trend-down">↓ -0.5%</span></td>
+            <td style="font-size:13px;">Acciaierie Nord</td>
+            <td style="font-size:12px;color:var(--text2);">18 apr 2026</td>
+            <td><span class="badge badge-ok">OK</span></td>
+            <td style="text-align:right"><span style="font-size:12px;color:var(--accent);cursor:pointer;">Aggiorna</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

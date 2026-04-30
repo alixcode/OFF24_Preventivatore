@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OFF24 — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d141a; --bg2: #1d1e20; --bg3: #211e1b;
+    --accent: #cc6333; --accent-h: #b5522a;
+    --accent-light: #ffeacc;
+    --text: #ffffff; --text2: #56585e; --text3: #8a8c92;
+    --border: rgba(255,255,255,0.08);
+    --green: #2e7d4f; --red: #8b2e2e; --yellow: #7d6b2e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; display: flex; min-height: 100vh; font-size: 14px; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 220px; min-height: 100vh; background: var(--bg2);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; bottom: 0;
+  }
+  .logo { padding: 24px 20px 20px; border-bottom: 1px solid var(--border); }
+  .logo-name { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text); }
+  .logo-sub { font-size: 10px; color: var(--text2); letter-spacing: 2px; margin-top: 2px; }
+  .logo-dot { width: 8px; height: 8px; background: var(--accent); display: inline-block; margin-right: 6px; }
+  nav { flex: 1; padding: 16px 0; }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label { font-size: 10px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; padding: 8px 8px 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px; color: var(--text3); cursor: pointer;
+    transition: color 0.15s, background 0.15s; font-size: 13.5px;
+    text-decoration: none; border-left: 2px solid transparent;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(204,99,51,0.08); }
+  .nav-icon { width: 16px; text-align: center; font-size: 14px; }
+  .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: 10px; }
+  .avatar { width: 30px; height: 30px; background: var(--accent); color: white; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .user-info .name { font-size: 13px; font-weight: 500; }
+  .user-info .role { font-size: 11px; color: var(--text2); }
+
+  /* MAIN */
+  .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+  .topbar {
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 14px 32px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 22px; }
+  .topbar-right { display: flex; gap: 12px; align-items: center; }
+  .btn {
+    padding: 8px 20px; font-family: 'DM Sans', sans-serif; font-size: 13px;
+    font-weight: 600; cursor: pointer; border: none; letter-spacing: 0.3px;
+    transition: background 0.15s; text-decoration: none; display: inline-block;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
+
+  .content { padding: 32px; flex: 1; }
+
+  /* KPI */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .kpi-card {
+    background: var(--bg2); border: 1px solid var(--border); padding: 20px 22px;
+  }
+  .kpi-label { font-size: 11px; color: var(--text2); letter-spacing: 1px; font-weight: 700; text-transform: uppercase; margin-bottom: 10px; }
+  .kpi-value { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--text); margin-bottom: 6px; }
+  .kpi-delta { font-size: 12px; }
+  .kpi-delta.up { color: #4caf7d; }
+  .kpi-delta.down { color: #e05c5c; }
+  .kpi-delta.neutral { color: var(--text2); }
+  .kpi-bar { height: 2px; background: var(--border); margin-top: 14px; }
+  .kpi-bar-fill { height: 100%; background: var(--accent); }
+
+  /* TWO COL */
+  .two-col { display: grid; grid-template-columns: 1fr 380px; gap: 20px; }
+
+  /* TABLE */
+  .card { background: var(--bg2); border: 1px solid var(--border); }
+  .card-header { padding: 18px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card-title { font-weight: 600; font-size: 14px; }
+  .card-action { font-size: 12px; color: var(--accent); cursor: pointer; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 10px 22px; text-align: left; font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:nth-child(even) { background: var(--bg3); }
+  tbody tr:hover { background: rgba(204,99,51,0.06); }
+  tbody td { padding: 12px 22px; font-size: 13.5px; }
+  .td-client { font-weight: 500; }
+  .td-desc { color: var(--text3); font-size: 12.5px; }
+  .td-amount { font-weight: 600; font-family: 'DM Sans', sans-serif; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block; padding: 3px 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .badge-bozza { background: rgba(86,88,94,0.25); color: #8a8c92; }
+  .badge-inviato { background: rgba(204,99,51,0.2); color: var(--accent); }
+  .badge-approvato { background: rgba(76,175,125,0.15); color: #4caf7d; }
+  .badge-perso { background: rgba(224,92,92,0.15); color: #e05c5c; }
+  .badge-commessa { background: rgba(100,149,237,0.15); color: #6495ed; }
+
+  /* RISK METER */
+  .risk-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 22px; border-bottom: 1px solid var(--border); }
+  .risk-row:last-child { border-bottom: none; }
+  .risk-client { font-size: 13px; font-weight: 500; }
+  .risk-desc { font-size: 11.5px; color: var(--text2); margin-top: 2px; }
+  .risk-pct { font-size: 13px; font-weight: 700; }
+  .risk-bar-wrap { width: 80px; height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; }
+  .risk-bar-fill { height: 100%; border-radius: 2px; }
+  .r-low { background: #4caf7d; }
+  .r-med { background: var(--accent); }
+  .r-high { background: #e05c5c; }
+
+  /* QUICK ACTIONS */
+  .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px; }
+  .quick-btn {
+    background: var(--bg); border: 1px solid var(--border); padding: 14px 14px;
+    cursor: pointer; text-align: left; transition: border-color 0.15s;
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+  }
+  .quick-btn:hover { border-color: var(--accent); }
+  .quick-btn .q-icon { font-size: 18px; margin-bottom: 8px; color: var(--accent); }
+  .quick-btn .q-label { font-size: 12.5px; font-weight: 600; }
+  .quick-btn .q-desc { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  .section-label { font-size: 11px; color: var(--text2); letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; margin-bottom: 14px; }
+
+  .back-link { font-size: 12px; color: var(--text2); text-decoration: none; margin-bottom: 20px; display: inline-block; }
+  .back-link:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div><span class="logo-dot"></span><span class="logo-name">OFF24</span></div>
+    <div class="logo-sub">PREVENTIVATORE</div>
+  </div>
+  <nav>
+    <div class="nav-section">
+      <div class="nav-label">Principale</div>
+      <a class="nav-item active" href="dashboard.html"><span class="nav-icon">▪</span> Dashboard</a>
+      <a class="nav-item" href="wizard.html"><span class="nav-icon">+</span> Nuovo preventivo</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◈</span> Preventivi</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◉</span> Commesse</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Gestione</div>
+      <a class="nav-item" href="materiali.html"><span class="nav-icon">◫</span> Materiali</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◧</span> Fornitori</a>
+      <a class="nav-item" href="#"><span class="nav-icon">◦</span> Clienti</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <a class="nav-item" href="#"><span class="nav-icon">◌</span> Impostazioni</a>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-pill">
+      <div class="avatar">AB</div>
+      <div class="user-info">
+        <div class="name">Alice Brocca</div>
+        <div class="role">Officina24 Srl</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <a href="index.html" class="back-link">← Mockup navigator</a>
+      <div class="topbar-title">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--text2);">Apr 2026</span>
+      <a class="btn btn-primary" href="wizard.html">+ Nuovo preventivo</a>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI -->
+    <div class="section-label">Panoramica mese</div>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Preventivi aperti</div>
+        <div class="kpi-value">12</div>
+        <div class="kpi-delta up">↑ 3 rispetto al mese scorso</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:75%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Valore offerte</div>
+        <div class="kpi-value">€ 84k</div>
+        <div class="kpi-delta up">↑ +12% vs marzo</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:60%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Margine medio</div>
+        <div class="kpi-value">28%</div>
+        <div class="kpi-delta down">↓ -2pp — target 30%</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:28%"></div></div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Commesse attive</div>
+        <div class="kpi-value">5</div>
+        <div class="kpi-delta neutral">→ stabile</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" style="width:50%"></div></div>
+      </div>
+    </div>
+
+    <!-- TABLE + SIDEBAR -->
+    <div class="two-col">
+
+      <!-- PREVENTIVI RECENTI -->
+      <div>
+        <div class="section-label">Preventivi recenti</div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Ultimi 30 giorni</span>
+            <span class="card-action">Vedi tutti →</span>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>N°</th>
+                <th>Cliente</th>
+                <th>Descrizione</th>
+                <th>Importo</th>
+                <th>Stato</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr onclick="window.location='preventivo-detail.html'">
+                <td style="color:var(--text2);font-size:12px;">PV-2026-041</td>
+                <td class="td-client">Costruzioni Rossi</td>
+                <td class="td-desc">Scala elicoidale inox — 3 rampe</td>
+                <td class="td-amount">€ 14.800</td>
+                <td><span class="badge badge-inviato">Inviato</span></td>
+                <td style="color:var(--text2);font-size:12px;">29 apr</td>
+              </tr>
+              <tr>
+                <td style="color:var(--text2);font-size:12px;">PV-2026-040</td>
+                <td class="td-client">Logistica Verdi SpA</td>
+                <td class="td-desc">Cancello scorrevole automatico</td>
+                <td class="td-amount">€ 6.200</td>
+                <td><span class="badge badge-approvato">Approvato</span></td>
+                <td style="color:var(--text2);font-size:12px;">28 apr</td>
+              </tr>
+              <tr>
+                <td style="color:var(--text2);font-size:12px;">PV-2026-039</td>
+                <td class="td-client">Studio Bianchi</td>
+                <td class="td-desc">Struttura portante magazzino</td>
+                <td class="td-amount">€ 31.500</td>
+                <td><span class="badge badge-bozza">Bozza</span></td>
+                <td style="color:var(--text2);font-size:12px;">27 apr</td>
+              </tr>
+              <tr>
+                <td style="color:var(--text2);font-size:12px;">PV-2026-038</td>
+                <td class="td-client">Edilmetal Snc</td>
+                <td class="td-desc">Pensilina acciaio zincato</td>
+                <td class="td-amount">€ 8.900</td>
+                <td><span class="badge badge-commessa">In commessa</span></td>
+                <td style="color:var(--text2);font-size:12px;">25 apr</td>
+              </tr>
+              <tr>
+                <td style="color:var(--text2);font-size:12px;">PV-2026-037</td>
+                <td class="td-client">Fratelli Neri</td>
+                <td class="td-desc">Ringhiera terrazzo — 28ml</td>
+                <td class="td-amount">€ 4.100</td>
+                <td><span class="badge badge-perso">Perso</span></td>
+                <td style="color:var(--text2);font-size:12px;">22 apr</td>
+              </tr>
+              <tr>
+                <td style="color:var(--text2);font-size:12px;">PV-2026-036</td>
+                <td class="td-client">Marchi Engineering</td>
+                <td class="td-desc">Carpenteria industriale — capannone</td>
+                <td class="td-amount">€ 19.300</td>
+                <td><span class="badge badge-approvato">Approvato</span></td>
+                <td style="color:var(--text2);font-size:12px;">20 apr</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT COL -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+
+        <!-- AZIONI RAPIDE -->
+        <div>
+          <div class="section-label">Azioni rapide</div>
+          <div class="card">
+            <div class="quick-grid">
+              <a class="quick-btn" href="wizard.html">
+                <div class="q-icon">+</div>
+                <div class="q-label">Nuovo preventivo</div>
+                <div class="q-desc">Wizard guidato 5 step</div>
+              </a>
+              <button class="quick-btn">
+                <div class="q-icon">◫</div>
+                <div class="q-label">Agg. prezzi</div>
+                <div class="q-desc">Listino materiali</div>
+              </button>
+              <button class="quick-btn">
+                <div class="q-icon">◉</div>
+                <div class="q-label">Apri commessa</div>
+                <div class="q-desc">Da preventivo approvato</div>
+              </button>
+              <button class="quick-btn">
+                <div class="q-icon">◌</div>
+                <div class="q-label">Consuntivo</div>
+                <div class="q-desc">Inserisci ore reali</div>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERT RISCHIO -->
+        <div>
+          <div class="section-label">Alert margine</div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Preventivi sotto soglia</span>
+              <span style="font-size:11px;color:#e05c5c;font-weight:600;">3 critici</span>
+            </div>
+            <div class="risk-row">
+              <div>
+                <div class="risk-client">Studio Bianchi</div>
+                <div class="risk-desc">Struttura portante — manca disegno</div>
+                <div class="risk-bar-wrap"><div class="risk-bar-fill r-high" style="width:85%"></div></div>
+              </div>
+              <div style="text-align:right">
+                <div class="risk-pct" style="color:#e05c5c;">85%</div>
+                <div style="font-size:11px;color:var(--text2);">rischio</div>
+              </div>
+            </div>
+            <div class="risk-row">
+              <div>
+                <div class="risk-client">Costruzioni Rossi</div>
+                <div class="risk-desc">Scala elicoidale — input verbale</div>
+                <div class="risk-bar-wrap"><div class="risk-bar-fill r-med" style="width:45%"></div></div>
+              </div>
+              <div style="text-align:right">
+                <div class="risk-pct" style="color:var(--accent);">45%</div>
+                <div style="font-size:11px;color:var(--text2);">rischio</div>
+              </div>
+            </div>
+            <div class="risk-row">
+              <div>
+                <div class="risk-client">Fratelli Neri</div>
+                <div class="risk-desc">Ringhiera — urgenza alta</div>
+                <div class="risk-bar-wrap"><div class="risk-bar-fill r-low" style="width:20%"></div></div>
+              </div>
+              <div style="text-align:right">
+                <div class="risk-pct" style="color:#4caf7d;">20%</div>
+                <div style="font-size:11px;color:var(--text2);">rischio</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALERT PREZZI -->
+        <div>
+          <div class="card" style="border-left:2px solid var(--accent);">
+            <div style="padding:16px 20px;">
+              <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:6px;">ALERT LISTINO</div>
+              <div style="font-size:13.5px;font-weight:500;">3 prezzi materiali scaduti</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:4px;">Ferro tondo, lamiera 3mm, acciaio inox 304</div>
+              <a href="materiali.html" style="font-size:12px;color:var(--accent);margin-top:10px;display:block;">Aggiorna listino →</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

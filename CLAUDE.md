@@ -250,17 +250,21 @@ generici. Deve sembrare uno strumento da officina, non una startup.
 
 ## 10. STATO AVANZAMENTO
 
-- [ ] Setup progetto (Next.js + backend + DB)
-- [ ] Auth e multi-tenant
-- [ ] Wizard preventivo (step 1-5)
-- [ ] Motore costi
-- [ ] Output PDF
-- [ ] Listino materiali
+- [x] Setup progetto — monorepo pnpm, Next.js 14, Express, package shared
+- [x] Schema Prisma completo (14 tabelle) + seed Officina24
+- [x] Auth JWT — login/register, middleware, ruoli (admin/commerciale/operativo)
+- [x] Design system Tailwind — palette brand, componenti base, layout sidebar
+- [x] Struttura routing Next.js App Router + dashboard scaffold
+- [x] Motore rischio — `calculateRisk()` nel package shared (frontend + backend)
+- [x] Motore costi — `calculateCosts()` e `calculatePrices()` nel service layer
+- [x] API REST — /auth, /quotes, /materials, /clients, /dashboard/kpi
+- [ ] Wizard preventivo (step 1-5) — UI React interattiva
+- [ ] Output PDF — Puppeteer
+- [ ] Listino materiali — pagina frontend con aggiornamento prezzi
 - [ ] Gestione fornitori
-- [ ] Versionamento preventivi
-- [ ] Motore rischio
+- [ ] Versionamento preventivi — UI diff V1/V2
 - [ ] Consuntivo commessa
-- [ ] Dashboard KPI
+- [ ] Dashboard KPI — collegamento API reale
 - [ ] Storico e suggerimenti AI
 
 ---
