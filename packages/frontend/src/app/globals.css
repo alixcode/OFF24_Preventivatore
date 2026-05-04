@@ -48,6 +48,11 @@
     @apply bg-bg-secondary border border-brand-border;
   }
 
+  /* Label campo form */
+  .field-label {
+    @apply block text-[11px] font-bold text-brand-subtle uppercase tracking-wider mb-2;
+  }
+
   /* Badge stato preventivo */
   .badge-bozza    { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-brand-muted/25 text-brand-subtle; }
   .badge-inviato  { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-accent/20 text-accent; }

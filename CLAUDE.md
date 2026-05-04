@@ -256,9 +256,9 @@ generici. Deve sembrare uno strumento da officina, non una startup.
 - [x] Design system Tailwind — palette brand, componenti base, layout sidebar
 - [x] Struttura routing Next.js App Router + dashboard scaffold
 - [x] Motore rischio — `calculateRisk()` nel package shared (frontend + backend)
-- [x] Motore costi — `calculateCosts()` e `calculatePrices()` nel service layer
+- [x] Motore costi — `calculateCosts()` e `calculatePrices()` in shared (frontend + backend)
 - [x] API REST — /auth, /quotes, /materials, /clients, /dashboard/kpi
-- [ ] Wizard preventivo (step 1-5) — UI React interattiva
+- [x] Wizard preventivo (step 1-5) — UI React interattiva con calcolo live
 - [ ] Output PDF — Puppeteer
 - [ ] Listino materiali — pagina frontend con aggiornamento prezzi
 - [ ] Gestione fornitori
