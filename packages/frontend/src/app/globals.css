@@ -59,4 +59,11 @@
   .badge-approvato { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-green/15 text-status-green; }
   .badge-perso    { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-red/15 text-status-red; }
   .badge-commessa { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-blue/15 text-status-blue; }
+
+  /* Badge colori generici */
+  .badge-gray   { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-brand-muted/25 text-brand-subtle; }
+  .badge-yellow { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-yellow/15 text-status-yellow; }
+  .badge-green  { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-green/15 text-status-green; }
+  .badge-red    { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-red/15 text-status-red; }
+  .badge-blue   { @apply inline-block px-2.5 py-0.5 text-xs font-bold bg-status-blue/15 text-status-blue; }
 }
