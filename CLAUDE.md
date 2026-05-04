@@ -259,7 +259,7 @@ generici. Deve sembrare uno strumento da officina, non una startup.
 - [x] Motore costi — `calculateCosts()` e `calculatePrices()` in shared (frontend + backend)
 - [x] API REST — /auth, /quotes, /materials, /clients, /dashboard/kpi
 - [x] Wizard preventivo (step 1-5) — UI React interattiva con calcolo live
-- [ ] Output PDF — Puppeteer
+- [x] Output PDF — Puppeteer (template HTML A4, brand Officina24, stream diretto)
 - [ ] Listino materiali — pagina frontend con aggiornamento prezzi
 - [ ] Gestione fornitori
 - [ ] Versionamento preventivi — UI diff V1/V2

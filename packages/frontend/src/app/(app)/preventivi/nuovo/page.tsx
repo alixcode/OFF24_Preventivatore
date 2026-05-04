@@ -19,6 +19,7 @@ export default function NuovoPreventivo() {
   const [step, setStep]         = useState(1);
   const [state, setState]       = useState<WizardState>(INITIAL_STATE);
   const [submitting, setSubmitting] = useState(false);
+  const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
   const [error, setError]       = useState<string | null>(null);
 
   function patch(update: Partial<WizardState>) {
@@ -34,20 +35,26 @@ export default function NuovoPreventivo() {
     setSubmitting(true);
     setError(null);
     try {
-      await api.quotes.create({
-        clientId:          state.clientId,
-        workCategory:      state.workCategory,
-        detailLevel:       state.detailLevel,
-        urgency:           state.urgency,
-        initialNotes:      state.initialNotes,
-        material:          state.material || undefined,
-        complexity:        state.complexity || undefined,
-        widthMm:           state.widthMm ?? undefined,
-        heightMm:          state.heightMm ?? undefined,
-        depthMm:           state.depthMm ?? undefined,
-        weightKg:          state.weightKg ?? undefined,
+      const quote = await api.quotes.create({
+        clientId:            state.clientId,
+        workCategory:        state.workCategory,
+        detailLevel:         state.detailLevel,
+        urgency:             state.urgency,
+        initialNotes:        state.initialNotes,
+        material:            state.material || undefined,
+        complexity:          state.complexity || undefined,
+        widthMm:             state.widthMm ?? undefined,
+        heightMm:            state.heightMm ?? undefined,
+        depthMm:             state.depthMm ?? undefined,
+        weightKg:            state.weightKg ?? undefined,
+        appliedPrice:        state.appliedPrice || undefined,
+        clientDescription:   state.clientDescription || undefined,
+        paymentTerms:        state.paymentTerms,
+        validityDays:        state.validityDays,
+        exclusions:          state.exclusions,
       });
-      router.push("/preventivi");
+      setSavedQuoteId(quote.id);
+      // Non reindirizzare subito — lascia scaricare il PDF
     } catch (err: any) {
       setError(err.message ?? "Errore durante il salvataggio");
       setSubmitting(false);
@@ -95,6 +102,7 @@ export default function NuovoPreventivo() {
               onBack={() => goTo(4)}
               onSubmit={handleSubmit}
               submitting={submitting}
+              savedQuoteId={savedQuoteId ?? undefined}
             />
           )}
         </div>

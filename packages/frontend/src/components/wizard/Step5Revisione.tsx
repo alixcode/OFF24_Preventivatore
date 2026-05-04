@@ -1,12 +1,14 @@
 "use client";
 
 import { clsx } from "clsx";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { api } from "@/lib/api";
 import { calculateRisk, calculateCosts, calculatePrices, MARGIN_MINIMUM, MARGIN_TARGET, OVERHEAD_DEFAULT, STANDARD_EXCLUSIONS } from "@off24/shared";
 import type { WizardState } from "@/lib/wizardState";
 import { StepNav } from "./Step1Qualificazione";
 
 interface Props {
+  savedQuoteId?: string;
   state: WizardState;
   onChange: (patch: Partial<WizardState>) => void;
   onBack: () => void;
@@ -14,7 +16,16 @@ interface Props {
   submitting: boolean;
 }
 
-export function Step5Revisione({ state, onChange, onBack, onSubmit, submitting }: Props) {
+export function Step5Revisione({ state, onChange, onBack, onSubmit, submitting, savedQuoteId }: Props) {
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  async function handleDownloadPdf() {
+    if (!savedQuoteId) return;
+    setPdfLoading(true);
+    try { await api.quotes.downloadPdf(savedQuoteId); }
+    finally { setPdfLoading(false); }
+  }
+
   const risk = useMemo(() => calculateRisk({
     missingDrawings: state.detailLevel !== "disegno_tecnico",
     inputLevelPhoto: state.detailLevel === "foto_schizzo",
@@ -234,17 +245,23 @@ export function Step5Revisione({ state, onChange, onBack, onSubmit, submitting }
       <div className="flex justify-between items-center pt-6 border-t border-brand-border">
         <button type="button" className="btn-ghost" onClick={onBack}>← Indietro</button>
         <div className="flex gap-3">
-          <button type="button" className="btn-ghost"
-            onClick={() => onSubmit()}>
-            Salva bozza
-          </button>
+          {savedQuoteId && (
+            <button
+              type="button"
+              disabled={pdfLoading}
+              className={clsx("btn-outline", pdfLoading && "opacity-60")}
+              onClick={handleDownloadPdf}
+            >
+              {pdfLoading ? "Generazione..." : "⬇ Scarica PDF"}
+            </button>
+          )}
           <button
             type="button"
             disabled={submitting}
             className={clsx("btn-primary", submitting && "opacity-60")}
             onClick={onSubmit}
           >
-            {submitting ? "Salvataggio..." : needsApproval ? "Invia per approvazione" : "✓ Salva e genera PDF"}
+            {submitting ? "Salvataggio..." : savedQuoteId ? "✓ Aggiorna" : needsApproval ? "Invia per approvazione" : "✓ Salva preventivo"}
           </button>
         </div>
       </div>

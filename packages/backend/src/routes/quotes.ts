@@ -4,6 +4,8 @@ import { prisma } from "../lib/prisma";
 import { requireAuth } from "../middleware/auth";
 import { createError } from "../middleware/errorHandler";
 import { calculateRisk } from "@off24/shared";
+import { generateQuotePdf } from "../services/pdfService";
+import type { QuotePdfData, PdfLineItem } from "../services/pdfService";
 
 export const quotesRouter = Router();
 
@@ -143,15 +145,76 @@ quotesRouter.post("/:id/version", async (req, res, next) => {
   }
 });
 
-// Genera PDF (placeholder — integrazione Puppeteer in Fase 2)
-quotesRouter.get("/:id/pdf", requireAuth, async (req, res, next) => {
+// Genera PDF preventivo cliente
+quotesRouter.get("/:id/pdf", async (req, res, next) => {
   try {
+    const companyId = req.user!.companyId;
+
     const quote = await prisma.quote.findFirst({
-      where: { id: req.params.id, companyId: req.user!.companyId },
+      where: { id: req.params.id, companyId },
+      include: {
+        client:  true,
+        company: true,
+        versions: {
+          orderBy: { version: "desc" },
+          take: 1,
+          include: { items: true },
+        },
+      },
     });
     if (!quote) throw createError("Preventivo non trovato", 404);
 
-    res.json({ message: "PDF generation — da implementare in Fase 2", quoteId: quote.id });
+    const latestVersion = quote.versions[0];
+    const revNum = latestVersion?.version ?? 1;
+
+    // Converti righe versione → PdfLineItem (solo materiali e lavorazioni)
+    type QuoteItem = NonNullable<typeof latestVersion>["items"][number];
+    const items: PdfLineItem[] = (latestVersion?.items ?? [])
+      .filter((i: QuoteItem) => i.type === "materiale" || i.type === "lavorazione")
+      .map((i: QuoteItem) => ({
+        description: i.description,
+        unit:        i.unit ?? "",
+        quantity:    i.quantity,
+        unitPrice:   i.unitPrice,
+        total:       i.total,
+      }));
+
+    const data: QuotePdfData = {
+      quoteNumber:    quote.number,
+      revisionNumber: revNum,
+      issueDate:      new Date(quote.createdAt).toLocaleDateString("it-IT", {
+        day: "numeric", month: "long", year: "numeric",
+      }),
+      validityDays:   quote.validityDays,
+
+      companyName:    quote.company.name,
+      companyAddress: quote.company.address ?? "Via dell'Artigianato — Italia",
+      companyVat:     quote.company.vatNumber ?? "",
+      companyEmail:   quote.company.email ?? "",
+
+      clientName:     quote.client.name,
+      clientAddress:  quote.client.address ?? "",
+      clientVat:      quote.client.vatNumber ?? "",
+
+      description:    quote.clientDescription ?? `${quote.workCategory} in ${quote.material ?? "ferro"} — ${quote.complexity ?? "lavorazione"} complessità`,
+      items,
+
+      subtotalNet:    quote.costTotal,
+      appliedPrice:   quote.appliedPrice,
+      appliedMargin:  quote.appliedMargin,
+
+      paymentTerms:   quote.paymentTerms ?? "50% anticipato, 50% alla consegna",
+      exclusions:     quote.exclusions as string[],
+      notes:          "",
+    };
+
+    const pdfBuffer = await generateQuotePdf(data);
+
+    const filename = `${quote.number.replace(/[^a-zA-Z0-9-]/g, "_")}_Rev${revNum}.pdf`;
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pdfBuffer.length);
+    res.end(pdfBuffer);
   } catch (err) {
     next(err);
   }

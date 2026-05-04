@@ -44,6 +44,20 @@ export const api = {
     create: (data: any) => request<any>("/quotes", { method: "POST", body: JSON.stringify(data) }),
     newVersion: (id: string, data: any) =>
       request<any>(`/quotes/${id}/version`, { method: "POST", body: JSON.stringify(data) }),
+    downloadPdf: async (id: string): Promise<void> => {
+      const token = getToken();
+      const res = await fetch(`${BASE}/quotes/${id}/pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Errore generazione PDF");
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `preventivo_${id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
   },
   materials: {
     list: () => request<any[]>("/materials"),
